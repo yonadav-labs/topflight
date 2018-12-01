@@ -62,3 +62,7 @@ class Player(models.Model):
     class Meta:
         managed = False
         db_table = 'daily_topflight'
+
+    def __str__(self):
+    	return self.id
+ 

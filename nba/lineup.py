@@ -1,7 +1,8 @@
 import operator as op
 from ortools.linear_solver import pywraplp
-from general.models import *
+from nba.models import *
 
+import pdb
 
 class Roster:
     POSITION_ORDER = {
@@ -29,7 +30,7 @@ class Roster:
         return sum(map(lambda x: x.salary, self.players))
 
     def projected(self):
-        return sum(map(lambda x: x.proj_points, self.players))
+        return sum(map(lambda x: x.avg_projection_fd, self.players))
 
     def position_order(self, player):
         return self.POSITION_ORDER[player.position]
@@ -48,10 +49,7 @@ class Roster:
         if ds == 'FanDuel': 
             s = ','.join(str(x) for x in self.sorted_players())+'\n'
         else:
-            pos = {
-                'DraftKings': ['PG', 'SG', 'SF', 'PF', 'C', 'PG,SG', 'SF,PF'],
-            }
-            pos = pos[ds]
+            pos = ['PG', 'SG', 'SF', 'PF', 'C', 'PG,SG', 'SF,PF']
             players = list(self.players)
             for ii in pos:
                 for jj in players:
@@ -123,8 +121,10 @@ def get_lineup(ds, players, teams, locked, max_point, con_mul):
     objective = solver.Objective()
     objective.SetMaximization()
 
+    # pdb.set_trace()
     for i, player in enumerate(players):
-        objective.SetCoefficient(variables[i], player.proj_points)
+        print (player.id)
+        objective.SetCoefficient(variables[i], float(player.avg_projection_fd))
 
     salary_cap = solver.Constraint(0, SALARY_CAP[ds])
     for i, player in enumerate(players):
@@ -132,7 +132,7 @@ def get_lineup(ds, players, teams, locked, max_point, con_mul):
 
     point_cap = solver.Constraint(0, max_point)
     for i, player in enumerate(players):
-        point_cap.SetCoefficient(variables[i], player.proj_points)
+        point_cap.SetCoefficient(variables[i], float(player.avg_projection_fd))
 
     position_limits = POSITION_LIMITS[ds]
     for position, min_limit, max_limit in position_limits:
@@ -183,6 +183,8 @@ def calc_lineups(players, num_lineups, locked=[], ds='FanDuel'):
     teams = set([ii.team for ii in players])
     cnt = 0
 
+    # pdb.set_trace()
+
     con_mul = []
     if ds == 'DraftKings':      # multi positional in DraftKings
         players_ = []
@@ -205,7 +207,7 @@ def calc_lineups(players, num_lineups, locked=[], ds='FanDuel'):
 
         if not roster or cnt > 30:
             break
-        max_point = roster.projected() - 0.001
+        max_point = float(roster.projected()) - 0.001
         
         if roster.get_num_teams() >= TEAM_LIMIT[ds]:
             result.append(roster)

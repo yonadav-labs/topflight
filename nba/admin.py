@@ -5,4 +5,10 @@ from django.contrib import admin
 
 from nba.models import *
 
-admin.site.register(Player)
+class PlayerAdmin(admin.ModelAdmin):
+    list_display = ['id', 'first_name', 'last_name', 'position', 'team', 'opponent', 'salary', 'dk_salary',
+                    'avg_projection_fd', 'avg_projection_dk']
+    search_fields = ['first_name', 'last_name', 'team', 'id']
+    list_filter = ['team', 'position']
+
+admin.site.register(Player, PlayerAdmin)
