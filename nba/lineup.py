@@ -13,53 +13,44 @@ class Roster:
         "C": 4
     }
 
-    def __init__(self):
+    def __init__(self, ds):
         self.players = []
+        self.ds = ds
 
     def add_player(self, player):
         self.players.append(player)
-
-    def is_member(self, player):
-        return player in self.players
 
     def get_num_teams(self):
         teams = set([ii.team for ii in self.players])
         return len(teams)
 
     def spent(self):
-        return sum(map(lambda x: x.salary, self.players))
+        return sum(map(lambda x: getattr(x, ATTR[self.ds]['salary']), self.players))
 
     def projected(self):
-        return sum(map(lambda x: x.avg_projection_fd, self.players))
+        return sum(map(lambda x: getattr(x, ATTR[self.ds]['projection']), self.players))
 
     def position_order(self, player):
         return self.POSITION_ORDER[player.position]
 
-    def dict_position_order(self, player):
-        if player['pos'] in self.POSITION_ORDER:
-            return self.POSITION_ORDER[player['pos']]
-        else:
-            return 100
-
     def sorted_players(self):
         return sorted(self.players, key=self.position_order)
 
-    def get_csv(self, ds):
-        s = ''
-        if ds == 'FanDuel': 
-            s = ','.join(str(x) for x in self.sorted_players())+'\n'
+    def get_players(self):
+        if self.ds == 'FanDuel': 
+            return self.sorted_players()
         else:
             pos = ['PG', 'SG', 'SF', 'PF', 'C', 'PG,SG', 'SF,PF']
             players = list(self.players)
+            players_ = []
+
             for ii in pos:
                 for jj in players:
                     if jj.position in ii:
-                        s += str(jj) + ','
+                        players_.append(jj)
                         players.remove(jj)
                         break
-            s += str(players[0])+'\n'
-
-        return s
+            return players_ + players
 
     def __repr__(self):
         s = '\n'.join(str(x) for x in self.sorted_players())
@@ -123,16 +114,15 @@ def get_lineup(ds, players, teams, locked, max_point, con_mul):
 
     # pdb.set_trace()
     for i, player in enumerate(players):
-        print (player.id)
-        objective.SetCoefficient(variables[i], float(player.avg_projection_fd))
+        objective.SetCoefficient(variables[i], float(getattr(player, ATTR[ds]['projection'])))
 
     salary_cap = solver.Constraint(0, SALARY_CAP[ds])
     for i, player in enumerate(players):
-        salary_cap.SetCoefficient(variables[i], player.salary)
+        salary_cap.SetCoefficient(variables[i], getattr(player, ATTR[ds]['salary']))
 
     point_cap = solver.Constraint(0, max_point)
     for i, player in enumerate(players):
-        point_cap.SetCoefficient(variables[i], float(player.avg_projection_fd))
+        point_cap.SetCoefficient(variables[i], float(getattr(player, ATTR[ds]['projection'])))
 
     position_limits = POSITION_LIMITS[ds]
     for position, min_limit, max_limit in position_limits:
@@ -167,7 +157,7 @@ def get_lineup(ds, players, teams, locked, max_point, con_mul):
     solution = solver.Solve()
 
     if solution == solver.OPTIMAL:
-        roster = Roster()
+        roster = Roster(ds)
 
         for i, player in enumerate(players):
             if variables[i].solution_value() == 1:
@@ -190,15 +180,16 @@ def calc_lineups(players, num_lineups, locked=[], ds='FanDuel'):
         players_ = []
         idx = 0
         for ii in players:
-            p = vars(ii)
-            p.pop('_state')
-            ci_ = []
-            for jj in ii.actual_position.split('/'):
-                ci_.append(idx)
-                p['position'] = jj
-                players_.append(Player(**p))
-                idx += 1
-            con_mul.append(ci_)
+            if ii.draftkings_position:
+                p = vars(ii)
+                p.pop('_state')
+                ci_ = []
+                for jj in ii.draftkings_position.split('/'):
+                    ci_.append(idx)
+                    p['position'] = jj
+                    players_.append(Player(**p))
+                    idx += 1
+                con_mul.append(ci_)
         players = players_
 
     while True:

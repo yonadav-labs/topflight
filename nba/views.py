@@ -24,11 +24,11 @@ def _get_lineups(request):
     num_lineups = int(params.get('num-lineups', 5))
     ds = params.get('ds', 'DraftKings')
 
-    ids = [int(ii) for ii in ids]
-    locked = [int(ii) for ii in locked]
+    if ids:
+        players = Player.objects.filter(id__in=ids) 
+    else:
+        players = Player.objects.filter(avg_projection_fd__gt=0)
 
-    # players = Player.objects.filter(id__in=ids)
-    players = Player.objects.filter(avg_projection_fd__gt=0)
     lineups = calc_lineups(players, num_lineups, locked, ds)
     return lineups, players
 
@@ -41,11 +41,23 @@ def gen_lineups(request):
 
     header = CSV_FIELDS[ds] + ['Spent', 'Projected']
     
-    rows = [ii.get_csv(ds).strip().split(',')+[int(ii.spent()), ii.projected()]
-            for ii in lineups]
+    lineups_ = []
+    for ii in lineups:
+        lineup = []
+        for jj in ii.get_players():
+            lineup.append({
+                'id': jj.id,
+                'name': jj.nickname,
+                'avg_projection': getattr(jj, ATTR[ds]['projection']),
+                'position': getattr(jj, ATTR[ds]['position']),
+                'salary': getattr(jj, ATTR[ds]['salary']),
+                'team': jj.team
+            })
+        lineups_.append(lineup)
 
     result = {
-        'lineups': rows
+        'lineups': lineups_,
+        'ds': ds
     }
 
     return JsonResponse(result, safe=False)

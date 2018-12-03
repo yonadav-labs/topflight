@@ -2,6 +2,19 @@ from __future__ import unicode_literals
 
 from django.db import models
 
+ATTR = {
+    'FanDuel': {
+        'projection': 'avg_projection_fd',
+        'salary': 'salary',
+        'position': 'position'
+    },
+    'DraftKings': {
+        'projection': 'avg_projection_dk',
+        'salary': 'dk_salary',
+        'position': 'draftkings_position'
+    }
+}
+
 
 class Player(models.Model):
     id = models.CharField(db_column='Id', primary_key=True, max_length=12)
