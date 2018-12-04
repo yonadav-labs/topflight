@@ -41,7 +41,7 @@ def _get_lineups(request):
     if ids:
         players = Player.objects.filter(id__in=ids) 
     else:
-        players = Player.objects.filter(avg_projection_fd__gt=0)
+        players = Player.objects.filter(avg_projection_fd__gt=0, avg_projection_dk__gt=0)
 
     lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_team_member, max_team_member)
     return lineups, players
