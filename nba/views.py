@@ -21,7 +21,7 @@ def _get_lineups(request):
     params = json.loads(request.body)
     ids = params.get('ids')
     locked = params.get('locked')
-    num_lineups = int(params.get('num-lineups', 5))
+    num_lineups = min(int(params.get('num-lineups', 1)), 150)
     ds = params.get('ds', 'DraftKings')
 
     if ids:

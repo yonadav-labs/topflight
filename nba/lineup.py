@@ -2,8 +2,6 @@ import operator as op
 from ortools.linear_solver import pywraplp
 from nba.models import *
 
-import pdb
-
 class Roster:
     POSITION_ORDER = {
         "PG": 0,
@@ -171,7 +169,6 @@ def calc_lineups(players, num_lineups, locked=[], ds='FanDuel'):
 
     max_point = 10000
     teams = set([ii.team for ii in players])
-    cnt = 0
 
     # pdb.set_trace()
 
@@ -194,11 +191,10 @@ def calc_lineups(players, num_lineups, locked=[], ds='FanDuel'):
 
     while True:
         roster = get_lineup(ds, players, teams, locked, max_point, con_mul)
-        cnt += 1
-
-        if not roster or cnt > 30:
-            break
         max_point = float(roster.projected()) - 0.001
+
+        if not roster:
+            break
         
         if roster.get_num_teams() >= TEAM_LIMIT[ds]:
             result.append(roster)
