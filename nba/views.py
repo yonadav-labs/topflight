@@ -17,19 +17,33 @@ CSV_FIELDS = {
     'DraftKings': ['PG', 'SG', 'SF', 'PF', 'C', 'G', 'F', 'UTIL'],
 }
 
+SALARY_CAP = {
+    'FanDuel': 60000,
+    'DraftKings': 50000,
+}
+
+TEAM_MEMEBER_LIMIT = {
+    'FanDuel': 4,
+    'DraftKings': 8
+}
+
 def _get_lineups(request):
     params = json.loads(request.body)
     ids = params.get('ids')
     locked = params.get('locked')
-    num_lineups = min(int(params.get('num-lineups', 1)), 150)
+    num_lineups = min(params.get('num-lineups', 1), 150)
     ds = params.get('ds', 'DraftKings')
+    min_salary = params.get('min_salary', 0)
+    max_salary = params.get('max_salary', SALARY_CAP[ds])
+    min_team_member = params.get('min_team_member', 0)
+    max_team_member = params.get('max_team_member', TEAM_MEMEBER_LIMIT[ds])
 
     if ids:
         players = Player.objects.filter(id__in=ids) 
     else:
         players = Player.objects.filter(avg_projection_fd__gt=0)
 
-    lineups = calc_lineups(players, num_lineups, locked, ds)
+    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_team_member, max_team_member)
     return lineups, players
 
 @csrf_exempt
@@ -43,9 +57,9 @@ def gen_lineups(request):
     
     lineups_ = []
     for ii in lineups:
-        lineup = []
+        players = []
         for jj in ii.get_players():
-            lineup.append({
+            players.append({
                 'id': jj.id,
                 'name': jj.nickname,
                 'avg_projection': getattr(jj, ATTR[ds]['projection']),
@@ -53,7 +67,11 @@ def gen_lineups(request):
                 'salary': getattr(jj, ATTR[ds]['salary']),
                 'team': jj.team
             })
-        lineups_.append(lineup)
+        lineups_.append({ 
+            'players': players,
+            'salary': ii.spent(),
+            'projection': ii.projected()
+        })
 
     result = {
         'lineups': lineups_,

@@ -2,6 +2,7 @@ import operator as op
 from ortools.linear_solver import pywraplp
 from nba.models import *
 
+import pdb
 class Roster:
     POSITION_ORDER = {
         "PG": 0,
@@ -76,11 +77,6 @@ POSITION_LIMITS = {
     ]
 }
 
-SALARY_CAP = {
-    'FanDuel': 60000,
-    'DraftKings': 50000,
-}
-
 ROSTER_SIZE = {
     'FanDuel': 9,
     'DraftKings': 8,
@@ -91,12 +87,7 @@ TEAM_LIMIT = {
     'DraftKings': 2
 }
 
-TEAM_MEMEBER_LIMIT = {
-    'FanDuel': 4,
-    'DraftKings': 8
-}
-
-def get_lineup(ds, players, teams, locked, max_point, con_mul):
+def get_lineup(ds, players, teams, locked, max_point, con_mul, min_salary, max_salary, min_team_member, max_team_member):
     solver = pywraplp.Solver('nba-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
     variables = []
@@ -114,7 +105,7 @@ def get_lineup(ds, players, teams, locked, max_point, con_mul):
     for i, player in enumerate(players):
         objective.SetCoefficient(variables[i], float(getattr(player, ATTR[ds]['projection'])))
 
-    salary_cap = solver.Constraint(0, SALARY_CAP[ds])
+    salary_cap = solver.Constraint(min_salary, max_salary)
     for i, player in enumerate(players):
         salary_cap.SetCoefficient(variables[i], getattr(player, ATTR[ds]['salary']))
 
@@ -131,9 +122,9 @@ def get_lineup(ds, players, teams, locked, max_point, con_mul):
                 position_cap.SetCoefficient(variables[i], 1)
 
     # no more than n players from one team (fanduel)
-    if TEAM_MEMEBER_LIMIT[ds] != ROSTER_SIZE[ds]:
+    if max_team_member != ROSTER_SIZE[ds]:
         for team in teams:
-            team_cap = solver.Constraint(0, TEAM_MEMEBER_LIMIT[ds])
+            team_cap = solver.Constraint(min_team_member, max_team_member)
             for i, player in enumerate(players):
                 if team == player.team:
                     team_cap.SetCoefficient(variables[i], 1)
@@ -164,7 +155,7 @@ def get_lineup(ds, players, teams, locked, max_point, con_mul):
         return roster
 
 
-def calc_lineups(players, num_lineups, locked=[], ds='FanDuel'):
+def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_team_member, max_team_member):
     result = []
 
     max_point = 10000
@@ -190,7 +181,7 @@ def calc_lineups(players, num_lineups, locked=[], ds='FanDuel'):
         players = players_
 
     while True:
-        roster = get_lineup(ds, players, teams, locked, max_point, con_mul)
+        roster = get_lineup(ds, players, teams, locked, max_point, con_mul, min_salary, max_salary, min_team_member, max_team_member)
         max_point = float(roster.projected()) - 0.001
 
         if not roster:
