@@ -46,6 +46,13 @@ def _get_lineups(request):
     lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_team_member, max_team_member)
     return lineups, players
 
+def get_num_lineups(player, lineups):
+    num = 0
+    for ii in lineups:
+        if ii.is_member(player):
+            num = num + 1
+    return num
+
 @csrf_exempt
 def gen_lineups(request):
     lineups, players = _get_lineups(request)
@@ -65,7 +72,8 @@ def gen_lineups(request):
                 'avg_projection': getattr(jj, ATTR[ds]['projection']),
                 'position': getattr(jj, ATTR[ds]['position']),
                 'salary': getattr(jj, ATTR[ds]['salary']),
-                'team': jj.team
+                'team': jj.team,
+                'count': get_num_lineups(jj, lineups)
             })
         lineups_.append({ 
             'players': players,
@@ -75,7 +83,8 @@ def gen_lineups(request):
 
     result = {
         'lineups': lineups_,
-        'ds': ds
+        'ds': ds,
+        'total': len(lineups)
     }
 
     return JsonResponse(result, safe=False)

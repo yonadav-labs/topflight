@@ -23,6 +23,9 @@ class Roster:
         teams = set([ii.team for ii in self.players])
         return len(teams)
 
+    def is_member(self, player):
+        return player in self.players
+
     def spent(self):
         return sum(map(lambda x: getattr(x, ATTR[self.ds]['salary']), self.players))
 
