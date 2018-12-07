@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import json
+import math
 
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -37,21 +38,19 @@ def _get_lineups(request):
     max_salary = params.get('max_salary', SALARY_CAP[ds])
     min_team_member = params.get('min_team_member', 0)
     max_team_member = params.get('max_team_member', TEAM_MEMEBER_LIMIT[ds])
+    exposure = params.get('exposure')
 
+    players = Player.objects.filter(avg_projection_fd__gt=0, avg_projection_dk__gt=0)
     if ids:
-        players = Player.objects.filter(id__in=ids) 
-    else:
-        players = Player.objects.filter(avg_projection_fd__gt=0, avg_projection_dk__gt=0)
+        players = players.filter(id__in=ids) 
 
-    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_team_member, max_team_member)
+    # get exposure for each player
+    for pid, val in exposure.items():
+        val['min'] = int(math.ceil(val['min'] * num_lineups))
+        val['max'] = int(math.floor(val['max'] * num_lineups))
+
+    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_team_member, max_team_member, exposure)
     return lineups, players
-
-def get_num_lineups(player, lineups):
-    num = 0
-    for ii in lineups:
-        if ii.is_member(player):
-            num = num + 1
-    return num
 
 @csrf_exempt
 def gen_lineups(request):
