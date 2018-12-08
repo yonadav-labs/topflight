@@ -106,7 +106,6 @@ def get_lineup(ds, players, teams, locked, ban, max_point, con_mul, min_salary, 
     objective = solver.Objective()
     objective.SetMaximization()
 
-    # pdb.set_trace()
     for i, player in enumerate(players):
         objective.SetCoefficient(variables[i], float(getattr(player, ATTR[ds]['projection'])))
 
@@ -175,7 +174,6 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_t
     max_point = 10000
     teams = set([ii.team for ii in players])
     exposure_d = { ii['id']: ii for ii in exposure }
-    # pdb.set_trace()
 
     con_mul = []
     if ds == 'DraftKings':      # multi positional in DraftKings
@@ -194,10 +192,12 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_t
                 con_mul.append(ci_)
         players = players_
 
+    ban = []
     _ban = []   # temp ban
     # for min exposure
     for ii in exposure:
         if ii['min']:
+            # pdb.set_trace()
             _locked = [ii['id']]
             while True:
                 # check and update all users' status
@@ -205,19 +205,20 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_t
                 for pid, exp in cur_exps.items():
                     if exp >= exposure_d[pid]['max'] and pid not in ban:
                         ban.append(pid)
-                    elif exp >= exposure_d[pid]['min'] and pid not in _ban:
+                    elif exp >= exposure_d[pid]['min'] > 0 and pid not in _ban:
                         _ban.append(pid)
 
+                # pdb.set_trace()
                 if cur_exps[ii['id']] >= ii['min']:
                     break
                     
                 roster = get_lineup(ds, players, teams, locked+_locked, ban+_ban, max_point, con_mul, min_salary, 
                                     max_salary, min_team_member, max_team_member)
-                max_point = float(roster.projected()) - 0.001
 
                 if not roster:
                     return result
 
+                max_point = float(roster.projected()) - 0.001
                 if roster.get_num_teams() >= TEAM_LIMIT[ds]:
                     result.append(roster)
                     if len(result) == num_lineups:
@@ -237,11 +238,11 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_t
 
             roster = get_lineup(ds, players, teams, locked+_locked, ban, max_point, con_mul, min_salary, max_salary, 
                                 min_team_member, max_team_member)
-            max_point = float(roster.projected()) - 0.001
 
             if not roster:
                 return result
 
+            max_point = float(roster.projected()) - 0.001
             if roster.get_num_teams() >= TEAM_LIMIT[ds]:
                 result.append(roster)
                 if len(result) == num_lineups:

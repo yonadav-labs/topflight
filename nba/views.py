@@ -40,6 +40,7 @@ def _get_lineups(request):
     max_team_member = params.get('max_team_member', TEAM_MEMEBER_LIMIT[ds])
     exposure = params.get('exposure')
 
+    ids = [ii for ii in ids if ii]
     flt = { ATTR[ds]['projection']+'__gt': 0, 'id__in': ids }
     players = Player.objects.filter(**flt).order_by('-'+ATTR[ds]['projection'])
 
@@ -52,7 +53,7 @@ def _get_lineups(request):
 
         _exposure.append({
             'min': int(math.ceil(val['min'] * num_lineups)),
-            'max': int(math.floor(val['max'] * num_lineups))            
+            'max': int(math.floor(val['max'] * num_lineups)),
             'id': ii.id
         })
 
