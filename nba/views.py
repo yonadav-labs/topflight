@@ -40,21 +40,27 @@ def _get_lineups(request):
     max_team_member = params.get('max_team_member', TEAM_MEMEBER_LIMIT[ds])
     exposure = params.get('exposure')
 
-    players = Player.objects.filter(avg_projection_fd__gt=0, avg_projection_dk__gt=0)
-    if ids:
-        players = players.filter(id__in=ids) 
+    flt = { ATTR[ds]['projection']+'__gt': 0, 'id__in': ids }
+    players = Player.objects.filter(**flt).order_by('-'+ATTR[ds]['projection'])
 
-    # get exposure for each player
-    for pid, val in exposure.items():
-        val['min'] = int(math.ceil(val['min'] * num_lineups))
-        val['max'] = int(math.floor(val['max'] * num_lineups))
+    # get exposure for each valid player
+    _exposure = []
+    for ii in players:
+        val = exposure.get(ii.id)
+        if not val:
+            continue
 
-    lineups = calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_team_member, max_team_member, exposure)
-    return lineups, players
+        _exposure.append({
+            'min': int(math.ceil(val['min'] * num_lineups)),
+            'max': int(math.floor(val['max'] * num_lineups))            
+            'id': ii.id
+        })
+
+    return calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_team_member, max_team_member, _exposure)
 
 @csrf_exempt
 def gen_lineups(request):
-    lineups, players = _get_lineups(request)
+    lineups = _get_lineups(request)
 
     params = json.loads(request.body)
     ds = params.get('ds')
@@ -74,6 +80,7 @@ def gen_lineups(request):
                 'team': jj.team,
                 'count': get_num_lineups(jj, lineups)
             })
+
         lineups_.append({ 
             'players': players,
             'salary': ii.spent(),

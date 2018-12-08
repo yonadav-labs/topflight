@@ -168,18 +168,13 @@ def get_num_lineups(player, lineups):
     return num
 
 def get_exposure(players, lineups):
-    result = {}
-    for ii in players:
-        result[ii.id] = get_num_lineups(ii, lineups)
-    return result
-
+    return { ii.id: get_num_lineups(ii, lineups) for ii in players }
 
 def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_team_member, max_team_member, exposure):
     result = []
-
     max_point = 10000
     teams = set([ii.team for ii in players])
-
+    exposure_d = { ii['id']: ii for ii in exposure }
     # pdb.set_trace()
 
     con_mul = []
@@ -199,53 +194,56 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_t
                 con_mul.append(ci_)
         players = players_
 
+    _ban = []   # temp ban
     # for min exposure
-    for id, val in exposure.items():
-        if val['min']:
+    for ii in exposure:
+        if ii['min']:
+            _locked = [ii['id']]
             while True:
+                # check and update all users' status
                 cur_exps = get_exposure(players, result)
-                _ban = []
                 for pid, exp in cur_exps.items():
-                    if exp == exposure[pid]['max'] and pid not in ban:
+                    if exp >= exposure_d[pid]['max'] and pid not in ban:
                         ban.append(pid)
-                    elif exp >= exposure[pid]['min']:
-                        _ban = [pid]
+                    elif exp >= exposure_d[pid]['min'] and pid not in _ban:
+                        _ban.append(pid)
 
-                if cur_exps[id] >= val['min']:
+                if cur_exps[ii['id']] >= ii['min']:
                     break
                     
-                _locked = [id]
-                roster = get_lineup(ds, players, teams, locked+_locked, ban+_ban, max_point, con_mul, min_salary, max_salary, min_team_member, max_team_member)
+                roster = get_lineup(ds, players, teams, locked+_locked, ban+_ban, max_point, con_mul, min_salary, 
+                                    max_salary, min_team_member, max_team_member)
+                max_point = float(roster.projected()) - 0.001
 
                 if not roster:
                     return result
 
-                max_point = float(roster.projected()) - 0.001
                 if roster.get_num_teams() >= TEAM_LIMIT[ds]:
                     result.append(roster)
                     if len(result) == num_lineups:
                         return result
 
-    for id, val in exposure.items():
+    # for max exposure
+    for ii in exposure:
+        _locked = [ii['id']]
         while True:
             cur_exps = get_exposure(players, result)
             for pid, exp in cur_exps.items():
-                if exp == exposure[pid]['max'] and pid not in ban:
+                if exp >= exposure_d[pid]['max'] and pid not in ban:
                     ban.append(pid)
 
-            if cur_exps[id] == val['max']:
+            if cur_exps[ii['id']] >= ii['max']:
                 break
 
-            _locked = [id]
-            roster = get_lineup(ds, players, teams, locked+_locked, ban, max_point, con_mul, min_salary, max_salary, min_team_member, max_team_member)
+            roster = get_lineup(ds, players, teams, locked+_locked, ban, max_point, con_mul, min_salary, max_salary, 
+                                min_team_member, max_team_member)
+            max_point = float(roster.projected()) - 0.001
 
             if not roster:
                 return result
 
-            max_point = float(roster.projected()) - 0.001
             if roster.get_num_teams() >= TEAM_LIMIT[ds]:
                 result.append(roster)
                 if len(result) == num_lineups:
                     return result
-
     return result
