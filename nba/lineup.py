@@ -90,7 +90,7 @@ TEAM_LIMIT = {
     'DraftKings': 2
 }
 
-def get_lineup(ds, players, teams, locked, ban, max_point, con_mul, min_salary, max_salary, min_team_member, max_team_member):
+def get_lineup(ds, players, locked, ban, max_point, con_mul, min_salary, max_salary, _team_stack):
     solver = pywraplp.Solver('nba-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
     variables = []
@@ -125,10 +125,11 @@ def get_lineup(ds, players, teams, locked, ban, max_point, con_mul, min_salary, 
             if player.position in position:
                 position_cap.SetCoefficient(variables[i], 1)
 
-    # no more than n players from one team (fanduel)
-    if max_team_member != ROSTER_SIZE[ds]:
-        for team in teams:
-            team_cap = solver.Constraint(min_team_member, max_team_member)
+    # no more than n players from one team (team stack)
+    teams = _team_stack.keys()
+    for team in teams:
+        if _team_stack[team]['max'] != ROSTER_SIZE[ds]:
+            team_cap = solver.Constraint(_team_stack[team]['min'], _team_stack[team]['max'])
             for i, player in enumerate(players):
                 if team == player.team:
                     team_cap.SetCoefficient(variables[i], 1)
@@ -169,10 +170,9 @@ def get_num_lineups(player, lineups):
 def get_exposure(players, lineups):
     return { ii.id: get_num_lineups(ii, lineups) for ii in players }
 
-def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_team_member, max_team_member, exposure):
+def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team_stack, exposure):
     result = []
     max_point = 10000
-    teams = set([ii.team for ii in players])
     exposure_d = { ii['id']: ii for ii in exposure }
 
     con_mul = []
@@ -212,8 +212,8 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_t
                 if cur_exps[ii['id']] >= ii['min']:
                     break
                     
-                roster = get_lineup(ds, players, teams, locked+_locked, ban+_ban, max_point, con_mul, min_salary, 
-                                    max_salary, min_team_member, max_team_member)
+                roster = get_lineup(ds, players, locked+_locked, ban+_ban, max_point, con_mul, min_salary, 
+                                    max_salary, _team_stack)
 
                 if not roster:
                     return result
@@ -236,8 +236,8 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, min_t
             if cur_exps[ii['id']] >= ii['max']:
                 break
 
-            roster = get_lineup(ds, players, teams, locked+_locked, ban, max_point, con_mul, min_salary, max_salary, 
-                                min_team_member, max_team_member)
+            roster = get_lineup(ds, players, locked+_locked, ban, max_point, con_mul, min_salary, max_salary, 
+                                _team_stack)
 
             if not roster:
                 return result
