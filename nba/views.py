@@ -87,6 +87,7 @@ def gen_lineups(request):
             players.append({
                 'id': jj.id,
                 'name': jj.nickname,
+                'draftkings_name_id': jj.draftkings_name_id,
                 'avg_projection': getattr(jj, ATTR[ds]['projection']),
                 'position': getattr(jj, ATTR[ds]['position']),
                 'salary': getattr(jj, ATTR[ds]['salary']),

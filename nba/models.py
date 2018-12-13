@@ -71,6 +71,7 @@ class Player(models.Model):
     personal_fouls_drawn = models.FloatField(db_column='Personal_Fouls_Drawn', blank=True, null=True)
     personal_fouls_drawn_team_rank = models.IntegerField(db_column='Personal_Fouls_Drawn_Team_Rank', blank=True, null=True)
     draftkings_position = models.CharField(db_column='DraftKings_Position', max_length=45, blank=True, null=True)
+    draftkings_name_id = models.CharField(db_column='DraftKings_NameID', max_length=75, blank=True, null=True)
 
     class Meta:
         managed = False
