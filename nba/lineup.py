@@ -197,7 +197,6 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
     # for min exposure
     for ii in exposure:
         if ii['min']:
-            # pdb.set_trace()
             _locked = [ii['id']]
             while True:
                 # check and update all users' status
@@ -208,7 +207,6 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
                     elif exp >= exposure_d[pid]['min'] > 0 and pid not in _ban:
                         _ban.append(pid)
 
-                # pdb.set_trace()
                 if cur_exps[ii['id']] >= ii['min']:
                     break
                     
@@ -224,27 +222,21 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
                     if len(result) == num_lineups:
                         return result
 
-    # for max exposure
-    for ii in exposure:
-        _locked = [ii['id']]
-        while True:
-            cur_exps = get_exposure(players, result)
-            for pid, exp in cur_exps.items():
-                if exp >= exposure_d[pid]['max'] and pid not in ban:
-                    ban.append(pid)
+    # for max exposure -> focus on getting optimized lineups
+    while True:
+        cur_exps = get_exposure(players, result)
+        for pid, exp in cur_exps.items():
+            if exp >= exposure_d[pid]['max'] and pid not in ban:
+                ban.append(pid)
 
-            if cur_exps[ii['id']] >= ii['max']:
-                break
+        roster = get_lineup(ds, players, locked, ban, max_point, con_mul, min_salary, max_salary, _team_stack)
 
-            roster = get_lineup(ds, players, locked+_locked, ban, max_point, con_mul, min_salary, max_salary, 
-                                _team_stack)
+        if not roster:
+            return result
 
-            if not roster:
+        max_point = float(roster.projected()) - 0.001
+        if roster.get_num_teams() >= TEAM_LIMIT[ds]:
+            result.append(roster)
+            if len(result) == num_lineups:
                 return result
-
-            max_point = float(roster.projected()) - 0.001
-            if roster.get_num_teams() >= TEAM_LIMIT[ds]:
-                result.append(roster)
-                if len(result) == num_lineups:
-                    return result
     return result
