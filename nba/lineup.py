@@ -239,4 +239,3 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
             result.append(roster)
             if len(result) == num_lineups:
                 return result
-    return result
