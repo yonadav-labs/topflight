@@ -170,27 +170,28 @@ def get_num_lineups(player, lineups):
 def get_exposure(players, lineups):
     return { ii.id: get_num_lineups(ii, lineups) for ii in players }
 
-def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team_stack, exposure):
+def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team_stack, exposure, cus_proj):
     result = []
     max_point = 10000
     exposure_d = { ii['id']: ii for ii in exposure }
 
     con_mul = []
-    if ds == 'DraftKings':      # multi positional in DraftKings
-        players_ = []
-        idx = 0
-        for ii in players:
-            if ii.draftkings_position:
-                p = vars(ii)
-                p.pop('_state')
-                ci_ = []
-                for jj in ii.draftkings_position.split('/'):
-                    ci_.append(idx)
-                    p['position'] = jj
-                    players_.append(Player(**p))
-                    idx += 1
-                con_mul.append(ci_)
-        players = players_
+    players_ = []
+    idx = 0
+    for ii in players:
+        if getattr(ii, ATTR[ds]['position']):
+            p = vars(ii)
+            p.pop('_state')
+            p[ATTR[ds]['projection']] = float(cus_proj.get(str(ii.id), p[ATTR[ds]['projection']]))
+            ci_ = []
+
+            for jj in getattr(ii, ATTR[ds]['position']).split('/'):
+                ci_.append(idx)
+                p['position'] = jj
+                players_.append(Player(**p))
+                idx += 1
+            con_mul.append(ci_)
+    players = players_
 
     ban = []
     _ban = []   # temp ban
