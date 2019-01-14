@@ -16,11 +16,14 @@ Including another URLconf
 from django.conf.urls import url
 from django.contrib import admin
 
-from nba.views import *
+import nba.views as nba_views
+import mlb.views as mlb_views
 
 admin.site.site_header = "Top Flight"
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^gen-lineups', gen_lineups, name="gen_lineups"),
+    url(r'^gen-lineups', nba_views.gen_lineups),
+    url(r'^nba-gen-lineups', nba_views.gen_lineups),
+    url(r'^mlb-gen-lineups', mlb_views.gen_lineups),
 ]

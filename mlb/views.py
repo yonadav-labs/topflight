@@ -11,21 +11,19 @@ from django.http import HttpResponse, JsonResponse
 from .models import *
 from .lineup import *
 
-POSITION = ['PG', 'SG', 'SF', 'PF', 'C']
-
 CSV_FIELDS = {
-    'FanDuel': ['PG', 'PG', 'SG', 'SG', 'SF', 'SF', 'PF', 'PF', 'C'],
-    'DraftKings': ['PG', 'SG', 'SF', 'PF', 'C', 'G', 'F', 'UTIL'],
+    'FanDuel': ['P', 'C1B', '2B', '3B', 'SS', 'OF', 'OF', 'OF', 'UTIL'],
+    'DraftKings': ['P', 'P', 'C' '1B', '2B', '3B', 'SS', 'OF', 'OF', 'OF'],
 }
 
 SALARY_CAP = {
-    'FanDuel': 60000,
+    'FanDuel': 35000,
     'DraftKings': 50000,
 }
 
 TEAM_MEMEBER_LIMIT = {
-    'FanDuel': 4,
-    'DraftKings': 8
+    'FanDuel': 5,
+    'DraftKings': 6
 }
 
 def _get_lineups(request):
@@ -88,7 +86,7 @@ def gen_lineups(request):
             players.append({
                 'id': jj.id,
                 'name': jj.nickname,
-                'draftkings_name_id': jj.draftkings_name_id,
+                'draftkings_name_id': jj.dk_id,
                 'avg_projection': getattr(jj, ATTR[ds]['projection']),
                 'position': getattr(jj, ATTR[ds]['position']),
                 'salary': getattr(jj, ATTR[ds]['salary']),

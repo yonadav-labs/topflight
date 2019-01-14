@@ -5,11 +5,13 @@ from .models import *
 import pdb
 class Roster:
     POSITION_ORDER = {
-        "PG": 0,
-        "SG": 1,
-        "SF": 2,
-        "PF": 3,
-        "C": 4
+        "P": 0,
+        "C": 1,
+        "1B": 2,
+        "2B": 3,
+        "3B": 4,
+        "SS": 5,
+        "OF": 6
     }
 
     def __init__(self, ds):
@@ -39,10 +41,10 @@ class Roster:
         return sorted(self.players, key=self.position_order)
 
     def get_players(self):
-        if self.ds == 'FanDuel': 
+        if self.ds == 'DraftKings': 
             return self.sorted_players()
         else:
-            pos = ['PG', 'SG', 'SF', 'PF', 'C', 'PG,SG', 'SF,PF']
+            pos = ['P', 'C,1B', '2B', '3B', 'SS', 'OF', 'OF', 'OF']
             players = list(self.players)
             players_ = []
 
@@ -63,35 +65,37 @@ class Roster:
 
 POSITION_LIMITS = {
     'FanDuel': [
-        ["PG", 2, 2],
-        ["SG", 2, 2],
-        ["SF", 2, 2],
-        ["PF", 2, 2],
-        ["C", 1, 1]
+        ["P", 1, 2],
+        ["C,1B", 1, 2],
+        ["2B", 1, 2],
+        ["3B", 1, 2],
+        ["SS", 1, 2],
+        ["OF", 3, 4]
     ],
     'DraftKings': [
-        ["PG", 1, 3],
-        ["SG", 1, 3],
-        ["SF", 1, 3],
-        ["PF", 1, 3],
-        ["C", 1, 2],
-        ["PG,SG", 3, 4],
-        ["SF,PF", 3, 4]
+        ["P", 2, 2],
+        ["C", 1, 1],
+        ["1B", 1, 1],
+        ["2B", 1, 1],
+        ["3B", 1, 1],
+        ["SS", 1, 1],
+        ["OF", 3, 3]
     ]
 }
 
 ROSTER_SIZE = {
     'FanDuel': 9,
-    'DraftKings': 8,
+    'DraftKings': 10,
 }
 
 TEAM_LIMIT = {
-    'FanDuel': 3,
+    'FanDuel': 2,
     'DraftKings': 2
 }
 
 def get_lineup(ds, players, locked, ban, max_point, con_mul, min_salary, max_salary, _team_stack):
     solver = pywraplp.Solver('mlb-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+    # pdb.set_trace()
 
     variables = []
 
@@ -179,13 +183,14 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
     players_ = []
     idx = 0
     for ii in players:
-        if getattr(ii, ATTR[ds]['position']):
+        position = getattr(ii, ATTR[ds]['position'])
+        if position and position != "0":
             p = vars(ii)
             p.pop('_state')
             p[ATTR[ds]['projection']] = float(cus_proj.get(str(ii.id), p[ATTR[ds]['projection']]))
             ci_ = []
 
-            for jj in getattr(ii, ATTR[ds]['position']).split('/'):
+            for jj in position.split('/'):
                 ci_.append(idx)
                 p['position'] = jj
                 players_.append(Player(**p))
@@ -214,6 +219,7 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
                 roster = get_lineup(ds, players, locked+_locked, ban+_ban, max_point, con_mul, min_salary, 
                                     max_salary, _team_stack)
 
+                # pdb.set_trace()
                 if not roster:
                     return result
 
@@ -232,6 +238,7 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
 
         roster = get_lineup(ds, players, locked, ban, max_point, con_mul, min_salary, max_salary, _team_stack)
 
+        # pdb.set_trace()
         if not roster:
             return result
 
