@@ -95,7 +95,6 @@ TEAM_LIMIT = {
 
 def get_lineup(ds, players, locked, ban, max_point, con_mul, min_salary, max_salary, _team_stack):
     solver = pywraplp.Solver('mlb-lineup', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-    # pdb.set_trace()
 
     variables = []
 
@@ -115,7 +114,7 @@ def get_lineup(ds, players, locked, ban, max_point, con_mul, min_salary, max_sal
 
     salary_cap = solver.Constraint(min_salary, max_salary)
     for i, player in enumerate(players):
-        salary_cap.SetCoefficient(variables[i], getattr(player, ATTR[ds]['salary']))
+        salary_cap.SetCoefficient(variables[i], int(getattr(player, ATTR[ds]['salary'])))
 
     point_cap = solver.Constraint(0, max_point)
     for i, player in enumerate(players):
@@ -219,7 +218,6 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
                 roster = get_lineup(ds, players, locked+_locked, ban+_ban, max_point, con_mul, min_salary, 
                                     max_salary, _team_stack)
 
-                # pdb.set_trace()
                 if not roster:
                     return result
 
@@ -238,7 +236,6 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
 
         roster = get_lineup(ds, players, locked, ban, max_point, con_mul, min_salary, max_salary, _team_stack)
 
-        # pdb.set_trace()
         if not roster:
             return result
 
