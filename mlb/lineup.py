@@ -65,7 +65,7 @@ class Roster:
 
 POSITION_LIMITS = {
     'FanDuel': [
-        ["P", 1, 2],
+        ["P", 1, 1],
         ["C,1B", 1, 2],
         ["2B", 1, 2],
         ["3B", 1, 2],
