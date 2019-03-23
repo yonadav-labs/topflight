@@ -180,6 +180,15 @@ def check_batter_vs_pitcher(roster):
             return False
     return True
 
+def get_ban(ds, locked):
+    ban = []
+    for ii in locked:
+        player = Player.objects.get(id=ii)
+        if getattr(player, ATTR[ds]['position']) != 'P' and player.opposing_pitcher:
+            pitcher = Player.objects.filter(nickname=player.opposing_pitcher).first()
+            ban.append(pitcher.id)
+    return ban
+
 def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team_stack, exposure, cus_proj, no_batter_vs_pitcher):
     result = []
     max_point = 10000
@@ -204,8 +213,9 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
             con_mul.append(ci_)
     players = players_
 
-    ban = []
+    ban = get_ban(ds, locked)
     _ban = []   # temp ban
+    # pdb.set_trace()
     # for min exposure
     for ii in exposure:
         if ii['min']:
@@ -235,6 +245,7 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
                         if len(result) == num_lineups:
                             return result
 
+    # pdb.set_trace()
     # for max exposure -> focus on getting optimized lineups
     while True:
         cur_exps = get_exposure(players, result)
@@ -246,6 +257,8 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
 
         if not roster:
             return result
+
+        # pdb.set_trace()
 
         max_point = float(roster.projected()) - 0.001
         if roster.get_num_teams() >= TEAM_LIMIT[ds]:
