@@ -61,5 +61,5 @@ class Player(models.Model):
         db_table = 'daily_topflight'
 
     def __str__(self):
-    	return self.id
+        return self.id
  

@@ -173,7 +173,14 @@ def get_num_lineups(player, lineups):
 def get_exposure(players, lineups):
     return { ii.id: get_num_lineups(ii, lineups) for ii in players }
 
-def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team_stack, exposure, cus_proj):
+def check_batter_vs_pitcher(roster):
+    opposing_pitchers = [ii.opposing_pitcher for ii in roster.get_players()]
+    for ii in roster.get_players():
+        if ii.position == 'P' and ii.nickname in opposing_pitchers:
+            return False
+    return True
+
+def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team_stack, exposure, cus_proj, no_batter_vs_pitcher):
     result = []
     max_point = 10000
     exposure_d = { ii['id']: ii for ii in exposure }
@@ -223,9 +230,10 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
 
                 max_point = float(roster.projected()) - 0.001
                 if roster.get_num_teams() >= TEAM_LIMIT[ds]:
-                    result.append(roster)
-                    if len(result) == num_lineups:
-                        return result
+                    if not no_batter_vs_pitcher or check_batter_vs_pitcher(roster):
+                        result.append(roster)
+                        if len(result) == num_lineups:
+                            return result
 
     # for max exposure -> focus on getting optimized lineups
     while True:
@@ -241,6 +249,7 @@ def calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team
 
         max_point = float(roster.projected()) - 0.001
         if roster.get_num_teams() >= TEAM_LIMIT[ds]:
-            result.append(roster)
-            if len(result) == num_lineups:
-                return result
+            if not no_batter_vs_pitcher or check_batter_vs_pitcher(roster):
+                result.append(roster)
+                if len(result) == num_lineups:
+                    return result

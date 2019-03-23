@@ -39,6 +39,7 @@ def _get_lineups(request):
     exposure = params.get('exposure')
     team_stack = params.get('team_stack', {})
     cus_proj = params.get('cus_proj', {})
+    no_batter_vs_pitcher = params.get('no_batter_vs_pitcher', False)
 
     ids = [ii for ii in ids if ii]
     flt = { ATTR[ds]['projection']+'__gt': 0, 'id__in': ids }
@@ -68,7 +69,8 @@ def _get_lineups(request):
             'id': ii.id
         })
 
-    return calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, _team_stack, _exposure, cus_proj)
+    return calc_lineups(players, num_lineups, locked, ds, min_salary, max_salary, 
+        _team_stack, _exposure, cus_proj, no_batter_vs_pitcher)
 
 @csrf_exempt
 def gen_lineups(request):
