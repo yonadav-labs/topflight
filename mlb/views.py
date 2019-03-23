@@ -91,6 +91,19 @@ def gen_lineups(request):
                 'position': getattr(jj, ATTR[ds]['position']),
                 'salary': getattr(jj, ATTR[ds]['salary']),
                 'team': jj.team,
+                'batting_order': jj.batting_order,
+                'id_2': jj.id_2,
+                'id_3': jj.id_3,
+                'id_4': jj.id_4,
+                'id_5': jj.id_5,
+                'id_6': jj.id_6,
+                'dk_id_2': jj.dk_id_2,
+                'dk_id_3': jj.dk_id_3,
+                'dk_id_4': jj.dk_id_4,
+                'dk_id_5': jj.dk_id_5,
+                'dk_id_6': jj.dk_id_6,
+                'opponent': jj.opponent,
+                'opposing_pitcher': jj.opposing_pitcher,
                 'count': get_num_lineups(jj, lineups)
             })
 
