@@ -42,7 +42,7 @@ def _get_lineups(request):
     no_batter_vs_pitcher = params.get('no_batter_vs_pitcher', False)
 
     ids = [ii for ii in ids if ii]
-    flt = { ATTR[ds]['projection']+'__gt': 0, 'id__in': ids }
+    flt = { ATTR[ds]['projection']+'__gt': 0, 'id__in': ids, ATTR[ds]['salary']+'__gt': 0 }
     players = Player.objects.filter(**flt).order_by('-'+ATTR[ds]['projection'])
 
     _team_stack = {}
