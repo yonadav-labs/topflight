@@ -43,6 +43,18 @@ class Player(models.Model):
     dk_projection = models.DecimalField(db_column='DK_Projection', max_digits=12, decimal_places=2, blank=True, null=True)
     fd_value = models.DecimalField(db_column='FD_Value', max_digits=12, decimal_places=2, blank=True, null=True)
     dk_value = models.DecimalField(db_column='DK_Value', max_digits=12, decimal_places=2, blank=True, null=True)
+    batting_order = models.CharField(db_column='Batting_Order', max_length=5, blank=True, null=True)
+    id_2 = models.CharField(db_column='ID_2', max_length=12, blank=True, null=True)
+    id_3 = models.CharField(db_column='ID_3', max_length=12, blank=True, null=True)
+    id_4 = models.CharField(db_column='ID_4', max_length=12, blank=True, null=True)
+    id_5 = models.CharField(db_column='ID_5', max_length=12, blank=True, null=True)
+    id_6 = models.CharField(db_column='ID_6', max_length=12, blank=True, null=True)
+    dk_id_2 = models.CharField(db_column='DK_ID_2', max_length=12, blank=True, null=True)
+    dk_id_3 = models.CharField(db_column='DK_ID_3', max_length=12, blank=True, null=True)
+    dk_id_4 = models.CharField(db_column='DK_ID_4', max_length=12, blank=True, null=True)
+    dk_id_5 = models.CharField(db_column='DK_ID_5', max_length=12, blank=True, null=True)
+    dk_id_6 = models.CharField(db_column='DK_ID_6', max_length=12, blank=True, null=True)
+    opposing_pitcher = models.CharField(db_column='OpposingPitcher', max_length=45, blank=True, null=True)
 
     class Meta:
         managed = False
